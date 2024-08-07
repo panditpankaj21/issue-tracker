@@ -1,25 +1,22 @@
-'use client'
-import { Button, Callout, Text, TextField } from '@radix-ui/themes';
-import dynamic from 'next/dynamic';
-import { useForm, Controller } from 'react-hook-form';
+'use client';
+
+import ErrorMessage from '@/app/components/ErrorMessage';
+import Spinner from '@/app/components/Spinner';
+import { issueSchema } from '@/app/ValidationSchemas';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Issue } from '@prisma/client';
+import { Button, Callout, TextField } from '@radix-ui/themes';
 import axios from 'axios';
 import 'easymde/dist/easymde.min.css';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { issueSchema } from '../ValidationSchemas';
+import { Controller, useForm } from 'react-hook-form';
+import SimpleMDE from 'react-simplemde-editor';
 import { z } from 'zod';
-import ErrorMessage from '@/app/components/ErrorMessage';
-import Spinner from '@/app/components/Spinner';
-import { Issue } from '@prisma/client';
-
-const SimpleMDE = dynamic(() => import('react-simplemde-editor'), {
-  ssr: false,
-});
 
 type IssueFormData = z.infer<typeof issueSchema>;
 
-const IssueForm = ({ issue }: { issue?: Issue } ) => {
+const IssueForm = ({ issue }: { issue?: Issue }) => {
   const router = useRouter();
   const {
     register,
@@ -31,29 +28,18 @@ const IssueForm = ({ issue }: { issue?: Issue } ) => {
   });
   const [error, setError] = useState('');
   const [isSubmitting, setSubmitting] = useState(false);
-
   const onSubmit = handleSubmit(async (data) => {
     try {
       setSubmitting(true);
-
-      if(issue){
-        await axios.patch('/api/issues/'+issue.id, data);
-      } 
-      else{
-        await axios.post('/api/issues', data);
-      } 
-
-
+      if (issue) await axios.patch('/api/issues/' + issue.id, data);
+      else await axios.post('/api/issues', data);
       router.push('/issues');
       router.refresh();
-
     } catch (error) {
       setSubmitting(false);
-      console.log(error)
       setError('An unexpected error occurred.');
     }
   });
-
   return (
     <div className="max-w-xl">
       {error && (
@@ -62,10 +48,10 @@ const IssueForm = ({ issue }: { issue?: Issue } ) => {
         </Callout.Root>
       )}
       <form className="space-y-3" onSubmit={onSubmit}>
-        <TextField.Root 
-          defaultValue={issue?.title} 
-          placeholder="Title" 
-          {...register('title')}
+        <TextField.Root
+            defaultValue={issue?.title}
+            placeholder="Title"
+            {...register('title')}
         >
         </TextField.Root>
         <ErrorMessage>{errors.title?.message}</ErrorMessage>
@@ -79,12 +65,11 @@ const IssueForm = ({ issue }: { issue?: Issue } ) => {
         />
         <ErrorMessage>{errors.description?.message}</ErrorMessage>
         <Button disabled={isSubmitting}>
-          {issue ? 'Update Issue' : 'Submit New Issue' }
-          {isSubmitting && <Spinner/>}
+          {issue ? 'Update Issue' : 'Submit New Issue'}{' '}
+          {isSubmitting && <Spinner />}
         </Button>
       </form>
     </div>
   );
 };
-
 export default IssueForm;
